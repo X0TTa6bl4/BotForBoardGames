@@ -80,4 +80,10 @@ return [
         'message' => 'Введите защиту',
         'handler' => \src\Telegraph\Infrastructure\Screen\Input\SetProtection::class
     ],
+
+    'test'=> [
+        'type' => 'keyboard',
+        'message' => 'Тест',
+        'handler' => \src\Telegraph\Infrastructure\Screen\Keyboard\TestMenu::class
+    ],
 ];

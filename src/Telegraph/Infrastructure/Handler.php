@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace src\Telegraph\Infrastructure;
 
+use DefStudio\Telegraph\Exceptions\TelegramUpdatesException;
+use DefStudio\Telegraph\Exceptions\TelegramWebhookException;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
+use DefStudio\Telegraph\Keyboard\Button;
+use DefStudio\Telegraph\Keyboard\Keyboard;
 use DefStudio\Telegraph\Models\TelegraphChat;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Stringable;
 use src\Telegraph\Infrastructure\Action\BattleActions;
 use src\Telegraph\Infrastructure\Action\CreateEntityMainActions;
@@ -23,6 +29,66 @@ class Handler extends WebhookHandler
 {
     use MultiplayerMenuActions, RegisterActions, CreateEntityMainActions, MainMenuActions, BattleActions, EntityInteractionActions;
     use UpdateUserTrait, SendAMessageToAllGroupMembersTrait;
+
+    /**
+     * @throws TelegramUpdatesException
+     */
+    public function handleUnknownCommand(Stringable $text): void
+    {
+        /** @var User $user */
+        $user = app(GetByChatIdUseCase::class)($this->getChatId());
+
+        $this->chat->deleteMessage($user->getMessageId())->send();
+
+        if ($text->value() === '/test') {
+            $this->chat->deleteMessage($this->messageId)->send();
+
+            $response = $this->getTelegraphChat(null)
+                ->message('test')
+                ->keyboard(
+                    KeyBoard::make()
+                        ->buttons([
+                            Button::make('test')->action('test'),
+                        ])
+                )
+                ->send();
+
+            $user->setMessageId($response->telegraphMessageId());
+            $this->updateUser($user);
+        } else {
+            $this->reply('Unknown command');
+        }
+    }
+
+    /**
+     * @throws TelegramWebhookException
+     */
+    protected function handleCallbackQuery(): void
+    {
+        $this->extractCallbackQueryData();
+
+        if (config('telegraph.debug_mode', config('telegraph.webhook.debug'))) {
+            Log::debug('Telegraph webhook callback', $this->data->toArray());
+        }
+
+        /** @var string $action */
+        $action = $this->callbackQuery?->data()->get('action') ?? '';
+
+        //if (config('menu.' . $action) != null) {
+        //    $this->reply('test action callback');
+        //    return;
+        //}
+
+        if (!$this->canHandle($action)) {
+            report(TelegramWebhookException::invalidAction($action));
+            $this->reply(__('telegraph::errors.invalid_action'));
+
+            return;
+        }
+
+        /** @phpstan-ignore-next-line */
+        App::call([$this, $action], $this->data->toArray());
+    }
 
     public function currentMenu(): void
     {

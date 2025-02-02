@@ -11,14 +11,16 @@ class UpdateUseCase
 {
     public function __construct(
         private readonly UserRepositoryContract $userRepository
-    )
-    {
+    ) {
     }
 
     public function __invoke(UpdateRequest $request): void
     {
         $user = $this->userRepository->getById($request->id);
-        $user->setName($request->name)->setMenuState($request->state)->setEntityIdInteraction($request->entityIdInteraction);
+        $user->setName($request->name)
+            ->setMenuState($request->state)
+            ->setEntityIdInteraction($request->entityIdInteraction)
+            ->setMessageId($request->messageId);
         $this->userRepository->update($user);
     }
 }

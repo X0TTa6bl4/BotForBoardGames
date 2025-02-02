@@ -41,7 +41,8 @@ class UserRepository implements UserRepositoryContract
             ->find($user->getId())
             ->update([
                 'name' => $user->getName(),
-                'menu_state' => $user->getMenuState()
+                'menu_state' => $user->getMenuState(),
+                'message_id' => $user->getMessageId()
             ]);
 
         if($user->getEntityIdInteraction() === null){

@@ -10,7 +10,8 @@ class UpdateRequest
         public readonly int    $id,
         public readonly string $name,
         public readonly string $state,
-        public readonly ?int   $entityIdInteraction = null
+        public readonly ?int   $entityIdInteraction = null,
+        public readonly ?int   $messageId = null
     )
     {
     }

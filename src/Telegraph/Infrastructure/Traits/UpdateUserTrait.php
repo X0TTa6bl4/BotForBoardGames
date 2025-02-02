@@ -17,7 +17,8 @@ trait UpdateUserTrait
                 id: $user->getId(),
                 name: $user->getName(),
                 state: $user->getMenuState(),
-                entityIdInteraction: $user->getEntityIdInteraction()
+                entityIdInteraction: $user->getEntityIdInteraction(),
+                messageId: $user->getMessageId()
             )
         );
     }

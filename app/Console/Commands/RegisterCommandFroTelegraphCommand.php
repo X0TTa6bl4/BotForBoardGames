@@ -44,7 +44,10 @@ class RegisterCommandFroTelegraphCommand extends Command
         $bot->registerCommands([
             'start' => 'Начинаем!',
             'menu' => 'Меню',
+            'test' => 'Тест',
         ])->send();
+
+        $this->info('Commands registered successfully');
         return 0;
     }
 }

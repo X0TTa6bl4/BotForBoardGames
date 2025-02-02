@@ -11,19 +11,23 @@ class User
     private int $chatId;
     private string $menuState;
     private ?int $entityIdInteraction;
+    private ?int $messageId;
 
     public function __construct(
         ?int   $id,
         string $name,
         int    $chatId,
         string $menuState,
-        ?int   $entityIdInteraction = null)
+        ?int   $entityIdInteraction = null,
+        ?int $messageId = null
+    )
     {
         $this->id = $id;
         $this->name = $name;
         $this->chatId = $chatId;
         $this->menuState = $menuState;
         $this->entityIdInteraction = $entityIdInteraction;
+        $this->messageId = $messageId;
     }
 
     public function getId(): ?int
@@ -51,6 +55,11 @@ class User
         return $this->entityIdInteraction;
     }
 
+    public function getMessageId(): ?int
+    {
+        return $this->messageId;
+    }
+
     public function setName(string $name): User
     {
         $this->name = $name;
@@ -67,5 +76,10 @@ class User
     {
         $this->entityIdInteraction = $entityIdInteraction;
         return $this;
+    }
+
+    public function setMessageId(?int $messageId): void
+    {
+        $this->messageId = $messageId;
     }
 }
