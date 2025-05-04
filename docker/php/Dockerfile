@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
         openssl \
         git \
         zip \
-        unzip
+        unzip \
+        jq
 
 RUN docker-php-ext-install pdo pdo_pgsql
 RUN pecl install xdebug \
@@ -17,3 +18,8 @@ RUN pecl install xdebug \
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /www
+
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]

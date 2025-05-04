@@ -27,6 +27,8 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       PHP_IDE_CONFIG: serverName=Docker
+    depends_on:
+      - ngrok
     networks:
       - laravel
   pgsql:
@@ -43,5 +45,16 @@ services:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - laravel
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    platform: linux/amd64
+    command: http site:80
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
     networks:
       - laravel
