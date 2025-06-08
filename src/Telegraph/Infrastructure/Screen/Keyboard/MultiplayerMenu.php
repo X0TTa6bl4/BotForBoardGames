@@ -6,11 +6,12 @@ namespace src\Telegraph\Infrastructure\Screen\Keyboard;
 
 use DefStudio\Telegraph\Keyboard\Button;
 use DefStudio\Telegraph\Keyboard\Keyboard;
+use src\User\Application\UseCase\Response\UserResponse;
 use src\User\Domain\Entity\User;
 
 class MultiplayerMenu implements KeyboardContract
 {
-    public function __invoke(User $user): Keyboard
+    public function __invoke(UserResponse $user): Keyboard
     {
         return Keyboard::make()->row([
             Button::make('Создать мир')->action('createWorld'),

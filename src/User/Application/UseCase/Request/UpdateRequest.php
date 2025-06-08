@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace src\User\Application\UseCase\Request;
 
-class UpdateRequest
+readonly class UpdateRequest
 {
     public function __construct(
-        public readonly int    $id,
-        public readonly string $name,
-        public readonly string $state,
-        public readonly ?int   $entityIdInteraction = null,
-        public readonly ?int   $messageId = null
+        public int    $id,
+        public string $name,
+        public string $state,
+        public ?int   $entityIdInteraction = null,
+        public ?int   $messageId = null
     )
     {
     }

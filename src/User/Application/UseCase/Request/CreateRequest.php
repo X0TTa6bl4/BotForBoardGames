@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace src\User\Application\UseCase\Request;
 
-class CreateRequest
+readonly class CreateRequest
 {
     public function __construct(
-        public readonly string $name,
-        public readonly int    $chatId
+        public string $name,
+        public int    $chatId
     )
     {
     }

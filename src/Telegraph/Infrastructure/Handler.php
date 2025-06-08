@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace src\Telegraph\Infrastructure;
 
-use DefStudio\Telegraph\Exceptions\TelegramUpdatesException;
 use DefStudio\Telegraph\Exceptions\TelegramWebhookException;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
 use DefStudio\Telegraph\Keyboard\Button;
@@ -23,6 +22,9 @@ use src\Telegraph\Infrastructure\Screen\Keyboard\KeyboardContract;
 use src\Telegraph\Infrastructure\Traits\SendAMessageToAllGroupMembersTrait;
 use src\Telegraph\Infrastructure\Traits\UpdateUserTrait;
 use src\User\Application\UseCase\GetByChatIdUseCase;
+use src\User\Application\UseCase\Request\UpdateLastMessageIdRequest;
+use src\User\Application\UseCase\Response\UserResponse;
+use src\User\Application\UseCase\UpdateLastMessageIdUseCase;
 use src\User\Domain\Entity\User;
 
 class Handler extends WebhookHandler
@@ -30,31 +32,31 @@ class Handler extends WebhookHandler
     use MultiplayerMenuActions, RegisterActions, CreateEntityMainActions, MainMenuActions, BattleActions, EntityInteractionActions;
     use UpdateUserTrait, SendAMessageToAllGroupMembersTrait;
 
-    /**
-     * @throws TelegramUpdatesException
-     */
     public function handleUnknownCommand(Stringable $text): void
     {
-        /** @var User $user */
         $user = app(GetByChatIdUseCase::class)($this->getChatId());
 
-        $this->chat->deleteMessage($user->getMessageId())->send();
-
         if ($text->value() === '/test') {
-            $this->chat->deleteMessage($this->messageId)->send();
+            $this->chat->deleteMessages([
+                $user->messageId,
+                $this->messageId,
+            ])->send();
 
-            $response = $this->getTelegraphChat(null)
+            $response = $this->chat
                 ->message('test')
                 ->keyboard(
                     KeyBoard::make()
                         ->buttons([
                             Button::make('test')->action('test'),
                         ])
-                )
-                ->send();
+                )->send();
 
-            $user->setMessageId($response->telegraphMessageId());
-            $this->updateUser($user);
+            app(UpdateLastMessageIdUseCase::class)(
+                new UpdateLastMessageIdRequest(
+                    $user->id,
+                    $response->telegraphMessageId()
+                )
+            );
         } else {
             $this->reply('Unknown command');
         }
@@ -74,10 +76,12 @@ class Handler extends WebhookHandler
         /** @var string $action */
         $action = $this->callbackQuery?->data()->get('action') ?? '';
 
-        //if (config('menu.' . $action) != null) {
-        //    $this->reply('test action callback');
-        //    return;
-        //}
+        $menu = config('menu.' . $action);
+
+        if ($menu != null) {
+            $this->reply('test action callback');
+            return;
+        }
 
         if (!$this->canHandle($action)) {
             report(TelegramWebhookException::invalidAction($action));
@@ -86,7 +90,6 @@ class Handler extends WebhookHandler
             return;
         }
 
-        /** @phpstan-ignore-next-line */
         App::call([$this, $action], $this->data->toArray());
     }
 
@@ -101,15 +104,15 @@ class Handler extends WebhookHandler
 
     public function menu(): void
     {
-        /** @var User $user */
+        /** @var UserResponse $user */
         $user = app(GetByChatIdUseCase::class)($this->getChatId());
 
         $this->sendCurrentMenu($user);
     }
 
-    protected function sendCurrentMenu(User $user, TelegraphChat $telegraphChat = null): Menu
+    protected function sendCurrentMenu(UserResponse $user, TelegraphChat $telegraphChat = null): Menu
     {
-        $menu = $this->getMenu($user->getMenuState());
+        $menu = $this->getMenu($user->menuState);
 
         if ($menu->getType() === 'keyboard') {
             /** @var KeyboardContract $handler */
@@ -153,7 +156,7 @@ class Handler extends WebhookHandler
 
     protected function getMenu(string $menuState): Menu
     {
-        $menuArray = config('menu.' . $menuState);
+        $menuArray = config('menu.'.$menuState);
         return new Menu(
             type: $menuArray['type'],
             message: $menuArray['message'],

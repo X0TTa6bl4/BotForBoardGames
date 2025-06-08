@@ -8,6 +8,7 @@ use App\Models\Entity;
 use src\EntityCard\Application\UseCase\EntityCard\CreateAnEntityToUpdateTheFieldsUseCase;
 use src\Telegraph\Infrastructure\Handler;
 use src\User\Application\UseCase\GetByChatIdUseCase;
+use src\User\Application\UseCase\Response\UserResponse;
 use src\User\Domain\Entity\User;
 
 /**
@@ -17,11 +18,11 @@ trait CreateEntityMainActions
 {
     public function createRandomEntity(): void
     {
-        /** @var User $user */
+        /** @var UserResponse $user */
         $user = app(GetByChatIdUseCase::class)($this->getChatId());
 
         $entity = Entity::factory()->create([
-            'user_id' => $user->getId(),
+            'user_id' => $user->id,
         ]);
 
         $this->chat->message("Существо создано: {$entity->name}")->send();
@@ -31,7 +32,7 @@ trait CreateEntityMainActions
 
     public function createEntityWithParams(): void
     {
-        /** @var User $user */
+        /** @var UserResponse $user */
         $user = app(GetByChatIdUseCase::class)($this->getChatId());
         $entityId = app(CreateAnEntityToUpdateTheFieldsUseCase::class)($user->getId());
         $user->setEntityIdInteraction($entityId);

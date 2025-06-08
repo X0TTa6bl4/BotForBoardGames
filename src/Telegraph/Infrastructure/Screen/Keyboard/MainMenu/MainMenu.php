@@ -11,7 +11,7 @@ use src\EntityCard\Application\Action\IsThereAGroupOwnedByTheUserContract;
 use src\EntityCard\Application\UseCase\User\GetByIdUseCase as GetEntityCardUserUseCase;
 use src\EntityCard\Domain\Entity\User as EntityCardUser;
 use src\Telegraph\Infrastructure\Screen\Keyboard\KeyboardContract;
-use src\User\Domain\Entity\User;
+use src\User\Application\UseCase\Response\UserResponse;
 
 class MainMenu implements KeyboardContract
 {
@@ -21,18 +21,17 @@ class MainMenu implements KeyboardContract
 
     public function __construct(
         private readonly IsThereAGroupOwnedByTheUserContract $isThereAGroupOwnedByTheUser,
-        private readonly IsHasBattleContract                 $isHasBattle,
-        private readonly GetEntityCardUserUseCase            $getEntityCardUserUseCase,
-    )
-    {
+        private readonly IsHasBattleContract $isHasBattle,
+        private readonly GetEntityCardUserUseCase $getEntityCardUserUseCase,
+    ) {
         $this->buttons = [];
     }
 
-    public function __invoke(User $user): Keyboard
+    public function __invoke(UserResponse $user): Keyboard
     {
-        $entityCardUser = ($this->getEntityCardUserUseCase)($user->getId());
+        $entityCardUser = ($this->getEntityCardUserUseCase)($user->id);
 
-        if (($this->isThereAGroupOwnedByTheUser)($user->getId())) {
+        if (($this->isThereAGroupOwnedByTheUser)($user->id)) {
             $this->addButtonsForAdmin($entityCardUser);
         } else {
             $this->addButtonsForUser($entityCardUser);
@@ -47,7 +46,7 @@ class MainMenu implements KeyboardContract
     {
         $this->addButtons([
             'showAllEntities' => Button::make('Показать всех персонажей')->action('showAllEntities'),
-            'help' => Button::make('Помощь')->action('help')
+            'help' => Button::make('Помощь')->action('help'),
         ]);
     }
 
@@ -61,7 +60,7 @@ class MainMenu implements KeyboardContract
             $this->addButtons([
                 'showCards' => Button::make('Показать карточку персонажа')
                     ->action('showEntity')
-                    ->param('id', $user->getEntities()[0]->getId())
+                    ->param('id', $user->getEntities()[0]->getId()),
             ]);
         } else {
             $this->addButtons([
