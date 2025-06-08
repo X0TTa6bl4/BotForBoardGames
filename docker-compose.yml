@@ -3,32 +3,20 @@ networks:
   laravel:
     driver: bridge
 services:
-  site:
-    image: nginx:stable-alpine
-    container_name: site
-    ports:
-      - "8080:80"
-    volumes:
-      - .:/www
-      - ./docker/nginx:/etc/nginx/conf.d
-    depends_on:
-      - app
-    networks:
-      - laravel
-  app:
-    build:
-      context: docker/php
-    container_name: app
-    volumes:
-      - .:/www
-      - ./docker/php/supervisor:/etc/supervisor/custom.d/
-      - ./docker/php/config/docker-php-ext-xdebug.ini:/usr/local/etc/php/conf.d/docker-php-xdebug.ini
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    platform: linux/amd64
+    command: http site:80
     environment:
-      PHP_IDE_CONFIG: serverName=Docker
-    depends_on:
-      - ngrok
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c 'echo -n > /dev/tcp/localhost/4040' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
     networks:
       - laravel
   pgsql:
@@ -47,14 +35,34 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     networks:
       - laravel
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok
-    platform: linux/amd64
-    command: http site:80
+  app:
+    build:
+      context: docker/php
+    container_name: app
+    volumes:
+      - .:/www
+      - ./docker/php/supervisor:/etc/supervisor/custom.d/
+      - ./docker/php/config/docker-php-ext-xdebug.ini:/usr/local/etc/php/conf.d/docker-php-xdebug.ini
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+      PHP_IDE_CONFIG: serverName=Docker
+    depends_on:
+      ngrok:
+        condition: service_healthy
+      pgsql:
+        condition: service_started
+    networks:
+      - laravel
+  site:
+    image: nginx:stable-alpine
+    container_name: site
     ports:
-      - "4040:4040"
+      - "8080:80"
+    volumes:
+      - .:/www
+      - ./docker/nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
     networks:
       - laravel
